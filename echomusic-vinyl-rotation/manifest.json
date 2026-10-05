@@ -1,0 +1,12 @@
+{
+  "id": "echomusic-vinyl-rotation",
+  "name": "黑胶唱片",
+  "version": "1.2.0",
+ "description":"旋转的黑胶与落下的唱针，是网易云音乐最具仪式感的灵魂符号",
+  "author": "吴彦祖",
+  "main": "index.js",
+  "icon": "logo.svg",
+  "requires": {
+    "echoMusicVersion": ">=2.2.6-beta.9"
+  }
+}
