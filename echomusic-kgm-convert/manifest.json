@@ -1,0 +1,17 @@
+{
+  "id": "echomusic-kgm-convert",
+  "name": "酷狗加密音频转原始格式",
+  "version": "1.3.0",
+  "description": "酷狗式音频下载 + 本地解密转换：① 播放条「收藏」旁下载入口，支持音质选择（标准128/高品质320/无损FLAC）、单曲/批量下载（批量先并发下载再统一转码，带超时与失败重试）、保存位置自选（仅下载当前账号已购/VIP有权限的曲目源，在线获取）；② 将本机已下载的酷狗加密音频（.kgm/.kgg）还原为可剪辑的原始音频（MP3/FLAC/OGG/WAV），解密转换全程本地完成；仅支持酷狗格式，不支持其他平台（仅处理本机已有权限文件）",
+  "author": "Luo",
+  "icon": "convert.svg",
+  "main": "index.js",
+  "requires": {
+    "echoMusicVersion": ">=2.3.1-beta.23"
+  },
+  "capabilities": {
+    "localFiles": true,
+    "process": true,
+    "unrestrictedNetwork": true
+  }
+}
