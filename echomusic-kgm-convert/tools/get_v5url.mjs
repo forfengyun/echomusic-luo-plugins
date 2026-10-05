@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN_DIR = path.resolve(__dirname, '..');
-const DB = path.resolve(PLUGIN_DIR, '..', '..', 'echomusic.sqlite'); // EchoMusic 数据目录下的 echomusic.sqlite
+const DB = path.resolve(PLUGIN_DIR, '..', '..', 'echomusic.sqlite'); // 插件数据目录下的 echomusic.sqlite
 
 const KEY_SALT_LITE = '185672dd44712f60bb1736df5a377e82';
 const SALT_LITE = 'LnT6xpN3khm36zse0QzvmgTZ3waWdRSA';
