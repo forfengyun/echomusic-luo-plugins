@@ -81,6 +81,7 @@ let topBtnRef = null;
 
 const BTN_ID = 'et-luo-topbtn';
 const ENTRY_ID = 'et-luo-entry';
+const ET_STYLE_ID = 'et-luo-topbtn-style';
 const pad2 = (n) => String(n).padStart(2, '0');
 
 // v3.5.0：动作+结束时机合并为单一紧凑下拉的映射键（action:endWhen）
@@ -525,16 +526,43 @@ const BTN_SVG =
   '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"></circle>' +
   '<path d="M12 6.5V12l2.1 1.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
 
+function injectTopBtnStyle() {
+  if (document.getElementById(ET_STYLE_ID)) return;
+  const s = document.createElement('style');
+  s.id = ET_STYLE_ID;
+  s.textContent = [
+    '.et-topbtn {',
+    ' width: 34px; height: 34px;',
+    ' display: inline-flex; align-items: center; justify-content: center;',
+    ' border-radius: 50%;',
+    ' transition: all 0.2s;',
+    ' background: transparent; border: none;',
+    ' color: var(--color-text-main); opacity: 0.6;',
+    ' cursor: pointer; flex-shrink: 0; flex: none;',
+    ' padding: 2px 6px; vertical-align: middle; line-height: 1;',
+    '}',
+    '.et-topbtn:hover {',
+    ' opacity: 1;',
+    ' background-color: var(--control-hover-bg);',
+    '}',
+    '.et-topbtn svg {',
+    ' width: 18px; height: 18px;',
+    '}',
+  ].join('\n');
+  document.head.appendChild(s);
+}
+
 function ensureTopBtn() {
   if (document.getElementById(BTN_ID)) { updateEntryLabel(); return; }
+  injectTopBtnStyle();
   const nav = document.querySelector('.titlebar-nav');
   if (!nav) return;
   const ref = nav.querySelector('.tb-search') || null;
   const b = document.createElement('button');
   b.id = BTN_ID;
-  b.className = 'zhs-plugin-btn nav-btn';
+  b.className = 'et-topbtn nav-btn';
   b.title = '定时停止';
-  b.style.cssText = 'display:inline-flex;align-items:center;flex:none;padding:2px 6px;vertical-align:middle;line-height:1';
+  b.style.cssText = 'flex: none;';
   b.innerHTML = BTN_SVG;
   topBtnRef = b;
   b.addEventListener('click', (e) => { e.stopPropagation(); togglePopup(); });
@@ -918,6 +946,7 @@ function teardown() {
   stopEntryWatch();
   try { const el = document.getElementById(BTN_ID); if (el && el.parentNode) el.parentNode.removeChild(el); } catch (e) {}
   try { const el = document.getElementById(ENTRY_ID); if (el && el.parentNode) el.parentNode.removeChild(el); } catch (e) {}
+  try { const st = document.getElementById(ET_STYLE_ID); if (st) st.remove(); } catch (e) {}
   if (popupEl) { try { popupEl.remove(); } catch (e) {} popupEl = null; }
   ctxRef = null;
 }
