@@ -1,4 +1,7 @@
-// echomusic-timer v3.6.8 · author: Luo
+// echomusic-timer v3.7.1 · author: Luo
+// v3.7.1：修复 toast 堆积 bug——once 模式到点进入「等待播完」后未停掉每秒到点判断 tick，下一秒仍满足到点条件重复 startPending()：每秒弹 toast 堆积成 ×n，且 pending 反复重建使无播放缓冲/2h 硬兜底永不触发；现到点后停掉该 tick，只保留 500ms 等待轮询。另：teardown 补停 popupTick，消除卸载时读秒 interval 泄漏。
+// v3.7.0：「播完再执行」升级——到点无条件进入等待态（不再要求"到点时刻正在播放"），中途打开播放器开始播也能等到该曲播完再执行；等待期间无任何播放迹象超过 15 分钟（无播放缓冲）则直接执行，2 小时硬兜底保留。
+// v3.6.9：修复「播完再执行」误判——isPlaying() 在 store 探测失败/字段缺失时 return false 被误判为播完直接执行（播一半即关机）；改用 isPlayingReal()（宿主 nowPlaying 桥兜底）三态判定：true=在播继续等、false=确认不在播、null=无法探测不判结束；仅「确认不在播放且当前曲目被清空（停止）」才算结束，手动暂停（曲目仍在）继续等待。
 // v3.6.8：stopTimer 仅在 sysShutdownPending 为真（本会话确实排程过系统关机）时才联动取消，消除 stop/close 等非关机场景误弹「已取消系统关机」；到点自动关闭不再弹「如需每天执行请重新开启」冗余提示，动作结果统一由 fire() 提示。
 // v3.6.1（Luo 定制版）：在 v3.6.0 恢复的 238px 旧版 UI 基础上，将弹窗上下高度整体压缩至约 2/3
 //   （标题/正文 padding、各控件行高/间距/字号同步收紧，结构不变）。
@@ -379,6 +382,17 @@ function isPlaying() {
   } catch (e) {}
   return false;
 }
+/**
+ * 播放器是否正在播放（含宿主桥兜底，v3.6.9）：
+ * 返回 true=正在播放；false=确认不在播放；null=无法探测（store 与桥均失败）。
+ * 无法探测不判结束，避免探测失败导致「播一半误判播完直接执行」。
+ */
+async function isPlayingReal() {
+  if (isPlaying()) return true;
+  const hp = await hostPlaybackState();
+  if (hp === null) return null;
+  return hp;
+}
 /** 当前曲目 ID（currentTrackId / currentTrackSnapshot / currentId 多字段兼容） */
 function currentTrackId() {
   const s = store();
@@ -409,6 +423,7 @@ function nearTrackEnd() {
  * 到点且选择「播完当前曲目」：进入等待态，等当前曲目播放结束（下一首/停止/近结尾）再真正执行。
  * 等待期间可点弹窗「停止定时」或 teardown 取消。防呆：超过 2 小时强制执行，避免流媒体卡死。
  */
+const NO_PLAY_GRACE_MS = 15 * 60 * 1000;   // v3.7.0：进入等待后无任何播放迹象的缓冲时长
 function startPending() {
   stopPending();
   const trackId = currentTrackId();
@@ -417,11 +432,28 @@ function startPending() {
   updateEntryLabel();
   pending = {
     trackId, started,
-    tick: setInterval(() => {
+    seenPlaying: !!trackId,     // 进入等待时已有曲目视为「正在播放中」
+    noPlaySince: Date.now(),    // 无播放缓冲起点（seenPlaying 后不再生效）
+    tick: setInterval(async () => {
       if (!pending) return;
       const id = currentTrackId();
-      const done = !isPlaying() || nearTrackEnd() || (trackId && id && id !== trackId) || (Date.now() - started > 2 * 3600 * 1000);
-      if (done) {
+      const playing = await isPlayingReal();
+      if (!pending) return;   // 等待期间可能已被取消/teardown
+      const p = pending;
+      // 有播放迹象（正在播 / 存在曲目）→ 标记已进入播放，关闭无播放缓冲
+      if (playing === true || id) {
+        if (!p.seenPlaying) { p.seenPlaying = true; p.noPlaySince = 0; }
+      }
+      const now = Date.now();
+      // v3.6.9：暂停（曲目仍在）≠ 播完，仅「确认不在播放且当前曲目被清空（停止）」才算结束；
+      // 无法探测（playing===null）不判结束，交由近结尾/切歌/超时兜底。
+      const stopped = playing === false && !id;
+      const done = stopped || nearTrackEnd() || (p.trackId && id && id !== p.trackId);
+      // v3.7.0：无播放缓冲——进入等待后从未出现播放迹象且超过缓冲时长 → 执行（防干等）
+      const noPlayGrace = !p.seenPlaying && p.noPlaySince > 0 && (now - p.noPlaySince > NO_PLAY_GRACE_MS);
+      // 硬兜底：2 小时强制
+      const hardTimeout = (now - p.started > 2 * 3600 * 1000);
+      if (done || noPlayGrace || hardTimeout) {
         stopPending();
         if (cfg.repeat !== 'daily') {
           stopTimer(true);   // v3.6.8: 到点自动关闭不重复 toast，动作结果统一由 fire() 提示
@@ -446,12 +478,18 @@ function schedule() {
   if (!cfg.enabled) return;
   nextStamp = calcNext();
   scheduleStart = Date.now();   // 本周期起算时刻
-  tick = setInterval(() => {
+  tick = setInterval(async () => {
     updateEntryLabel();          // 每秒刷新侧栏与顶栏 title 的实时倒计时（不改变触发判断）
     if (Date.now() >= nextStamp) {
-      // v3.4.0：结束时机=播完当前曲目 且 正在播放 → 到点先进等待态，等当前曲目播完再执行
-      if (cfg.endWhen === 'songEnd' && isPlaying()) {
-        if (cfg.repeat === 'daily') schedule();   // daily：先排下一次，等待期间不重复触发
+      // v3.4.0：结束时机=播完当前曲目 → 到点先进等待态，等当前曲目播完再执行
+      // v3.7.0：不再要求「到点时刻正在播放」——中途打开播放器开始播也能等到该曲播完；无播放缓冲 15 分钟兜底
+      if (cfg.endWhen === 'songEnd') {
+        // v3.7.1：once 模式到点后必须停掉这个「每秒到点判断」tick，否则下一秒仍满足到点条件
+        //    → 每秒重复 startPending()：① toast 每秒弹一次堆积成 ×n；② pending 被反复重建，
+        //    seenPlaying/noPlaySince/started 反复重置 → 无播放缓冲(15min)与 2h 硬兜底永不触发。
+        //    daily 交给 schedule() 内部清理并排下一次即可。
+        if (cfg.repeat === 'daily') { schedule(); }
+        else if (tick) { clearInterval(tick); tick = null; }
         startPending();
       } else {
         const once = cfg.repeat !== 'daily';
@@ -865,10 +903,10 @@ function renderPopup() {
 export async function activate(ctx) {
   ctxRef = ctx;
   await loadCfg();
-  diag('activate', 'code-ver=3.6.8', 'manifest=3.6.8', 'enabled=' + cfg.enabled, 'sysShutdownPending=' + sysShutdownPending, 'pending=' + !!pending);
+  diag('activate', 'code-ver=3.7.1', 'manifest=3.7.1', 'enabled=' + cfg.enabled, 'sysShutdownPending=' + sysShutdownPending, 'pending=' + !!pending);
   startEntryWatch();
   if (cfg.enabled) schedule();
-  toast('ECHO Timer v3.6.7 已就绪' + (cfg.enabled ? ' · ' + fmtStamp(nextStamp) + ' 待执行' : ''), 'info');
+  toast('ECHO Timer v3.7.1 已就绪' + (cfg.enabled ? ' · ' + fmtStamp(nextStamp) + ' 待执行' : ''), 'info');
   ctx.dispose(teardown);
 }
 
@@ -876,6 +914,7 @@ export async function activate(ctx) {
 function teardown() {
   stopPending();                           // v3.4.0：插件卸载时结束「等待播完」态
   if (tick) { clearInterval(tick); tick = null; }
+  stopPopupTick();                         // v3.7.1：卸载时停掉弹窗读秒 interval，避免泄漏
   stopEntryWatch();
   try { const el = document.getElementById(BTN_ID); if (el && el.parentNode) el.parentNode.removeChild(el); } catch (e) {}
   try { const el = document.getElementById(ENTRY_ID); if (el && el.parentNode) el.parentNode.removeChild(el); } catch (e) {}
