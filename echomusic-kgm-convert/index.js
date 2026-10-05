@@ -672,7 +672,6 @@ export async function activate(ctx) {
   // 2026-10-04：渲染进程网络栈请求 gateway 网关仍可能失败（errcode=1/风控）；node 子进程
   //   用 EchoMusic sqlite 里的登录态 + 已验证的 v5/url 签名直接取链，100% 绕过渲染层问题。
   const NODE_EXE_REL = "tools\\node\\node.exe"; // 插件目录内 node（process.launch 要求可执行程序位于插件目录内）
-  const NODE_EXE = "D:\\nodejs\\node-v24.20.0-win-x64\\node.exe";
   const NODE_SCRIPT_REL = "tools/get_v5url.mjs";
   const NODE_DOWNLOAD_REL = "tools/download.mjs"; // node 流式下载脚本（绕过 ctx.fs 8MB 沙箱限制）
 
