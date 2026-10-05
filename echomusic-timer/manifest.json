@@ -1,11 +1,11 @@
 {
   "id": "echomusic-timer",
   "name": "定时停止",
-  "version": "3.6.8",
+  "version": "3.7.1",
   "capabilities": {
     "process": true
   },
-  "description": "v3.6.8：stopTimer 仅在真正排程了系统关机时才联动取消（消除 stop/close 误弹「已取消系统关机」）；once 到点自动关闭不再弹「如需每天执行请重新开启」冗余 toast，动作结果统一由 fire 提示。v3.6.7：版本号四处对齐统一（头注释/manifest/toast/diag code-ver），诊断版 3.6.7-diag 正式定版，功能不变；v3.6.2：停止播放、关闭 EchoMusic、定时关机；支持指定时间或倒计时、每天重复；弹窗与顶栏「定时设置/定时停止」图标竖排对齐（右缘贴齐图标、垂直紧贴正下方展开、缩放动效原点指向图标）。v3.6.2：修复定时关机「只弹提示无实际效果」——宿主 launchPluginProcess 要求 manifest 声明 capabilities.process=true，缺声明会返回 {ok:false} 被误判为成功；已补声明并按 r.ok/r.pid 判定、失败提示真实原因；v3.6.1：弹窗上下高度压缩至约 2/3（标题/正文 padding 与控件行高、间距、字号同步收紧，结构不变）；v3.6.0：弹窗 UI 回退为 238px 标签列旧版样式（用户反馈极窄弹窗过小），保留「结束时机」（立即/播完再执行）独立分段控件；v3.5.0：修复「只提示不执行」根因——关闭软件改走宿主全局 IPC quit-app 真退出、停止播放改走 nowPlaying 桥(togglePlayback)、定时关机经插件目录内置 echo-timer-shutdown.exe 触发。v3.3.0：清理统一收口 teardown()。",
+  "description": "v3.7.1：修复 toasts 堆积 bug——once 模式到点进入「等待播完」后未停掉每秒到点判断 tick，导致每秒重复进入等待态：通知堆积成 ×n、pending 反复重建使无播放缓冲/2h 硬兜底永不触发；现已到点后停掉该 tick 只保留 500ms 等待轮询。v3.7.0：「播完再执行」升级——到点无条件进入等待态，中途打开播放器开始播也能等到该曲播完再执行；等待期无任何播放迹象超 15 分钟（无播放缓冲）则执行，2 小时硬兜底保留；v3.6.9：修复「播完再执行」误判——store 探测失败不再误判播完即执行（播一半即关机），手动暂停继续等待，仅停止（曲目清空）才执行，宿主桥兜底；v3.6.8：stopTimer 仅在真正排程了系统关机时才联动取消（消除 stop/close 误弹「已取消系统关机」）；once 到点自动关闭不再弹「如需每天执行请重新开启」冗余 toast，动作结果统一由 fire 提示。v3.6.7：版本号四处对齐统一（头注释/manifest/toast/diag code-ver），诊断版 3.6.7-diag 正式定版，功能不变；v3.6.2：停止播放、关闭 EchoMusic、定时关机；支持指定时间或倒计时、每天重复；弹窗与顶栏「定时设置/定时停止」图标竖排对齐（右缘贴齐图标、垂直紧贴正下方展开、缩放动效原点指向图标）。v3.6.2：修复定时关机「只弹提示无实际效果」——宿主 launchPluginProcess 要求 manifest 声明 capabilities.process=true，缺声明会返回 {ok:false} 被误判为成功；已补声明并按 r.ok/r.pid 判定、失败提示真实原因；v3.6.1：弹窗上下高度压缩至约 2/3（标题/正文 padding 与控件行高、间距、字号同步收紧，结构不变）；v3.6.0：弹窗 UI 回退为 238px 标签列旧版样式（用户反馈极窄弹窗过小），保留「结束时机」（立即/播完再执行）独立分段控件；v3.5.0：修复「只提示不执行」根因——关闭软件改走宿主全局 IPC quit-app 真退出、停止播放改走 nowPlaying 桥(togglePlayback)、定时关机经插件目录内置 echo-timer-shutdown.exe 触发。v3.3.0：清理统一收口 teardown()。",
   "author": "Luo",
   "icon": "alarm.svg",
   "main": "index.js",
