@@ -14,7 +14,7 @@ EchoMusic（酷狗概念版）插件源码仓库，仅供 EchoMusic 插件系统
 
 | 插件 | 功能 | 归属 |
 |---|---|---|
-| echomusic-kgm-convert | 酷狗加密音频还原（.kgm/.kgg → MP3/FLAC/OGG/WAV） | Luo 原创 |
+| echomusic-kgm-convert | 酷狗加密音频还原（.kgm/.kgg → MP3/FLAC/OGG/WAV）+ 直链下载合并版（v2.0.0） | Luo 原创 |
 | echomusic-resume | 断点续播 | Luo 原创 |
 | kugou-concept-sign | 酷狗概念版每日签到 / 概念币 | Luo 原创 |
 | echomusic-timer | 定时停止播放 / 定时关机 | Luo 原创 |
