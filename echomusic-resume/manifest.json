@@ -1,0 +1,12 @@
+{
+  "id": "echomusic-resume",
+  "name": "断点续播",
+  "version": "4.4.1",
+  "description": "全局单槽断点续播（Luo 定制版 v4.4.1）：播放器为唯一实例不分账号，仅保留【最近一次正在播放且未播完的歌曲】与其进度（全局唯一槽位 resume:last:__global__），完整播完或距结尾过近即清槽。恢复可靠性：重启/切号自动续播带重试兜底；恢复不破坏宿主队列（buildResumeQueue 沿用完整随机池，中断曲插队首）；启动/切号恢复期间用户手动切歌则取消迟到切回（userTookOver 守卫），点下一首不再被抢停。切号保护：随切号自动播起的歌曲不覆盖书签，窗口结束自动接回原书，仅主动换歌才替换书签。历史版本按账号隔离槽与歌曲级记录启动时自动清理。",
+  "author": "Luo",
+  "icon": "resume.svg",
+  "main": "index.js",
+  "requires": {
+    "echoMusicVersion": ">=2.3.1-beta.23"
+  }
+}
