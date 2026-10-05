@@ -1,0 +1,12 @@
+{
+  "id": "echomusic-payskip",
+  "name": "遇费跳过",
+  "version": "1.2.3",
+  "description": "遇费跳过：播放到无法播放的付费/受限曲目时自动跳转下一首。监听宿主播放失败事件（playback-failed/track-not-playable/audio-url-unavailable）并按 audioUrl 空特征兜底判卡，调用播放器 next 动作，带确认延迟/同曲冷却/连续跳过上限防误跳与死循环，全链路 try/catch 防拖垮渲染进程。",
+  "author": "Luo",
+  "icon": "./skip.svg",
+  "main": "index.js",
+  "requires": {
+    "echoMusicVersion": ">=2.3.1-beta.23"
+  }
+}
